@@ -10,13 +10,18 @@ import { IProducts } from './products.interface';
 export class ProductService {
   constructor(
     @InjectModel(Product.name)
-    private ProductModel: Model<IProducts>,
+    private readonly ProductModel: Model<IProducts>,
   ) {}
 
   async productCreate(CreateProductDto: CreateProductDto): Promise<IProducts> {
     const newProduct = new this.ProductModel({
-      ...CreateProductDto,
+      productName: CreateProductDto.productName,
+      description: CreateProductDto.description,
+      price: CreateProductDto.price,
+      stock: CreateProductDto.stock,
     });
+
+    console.log(newProduct);
 
     return newProduct.save();
   }
@@ -36,8 +41,15 @@ export class ProductService {
     return productName;
   }
 
-  async getAllProducts(): Promise<IProducts[]> {
-    const productData = await this.ProductModel.find();
+  async getAllProducts(productName: string): Promise<IProducts[]> {
+    const productData = await this.ProductModel.aggregate([
+      {
+        $match: { productData: productName },
+      },
+      { $group: { _id: '$CreateProductDto', count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+      { $project: { productName: 0 } },
+    ]);
 
     if (!productData || productData.length === 0) {
       throw new NotFoundException('product data not found');
