@@ -3,19 +3,18 @@ import {
   Get,
   Post,
   Body,
-  Patch,
   Param,
   Delete,
   Res,
-  Req,
   HttpStatus,
   Put,
+  BadRequestException,
 } from '@nestjs/common';
 import { ProductService } from './product.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
-import { Product } from './entities/product.entity';
-import { response } from 'express';
+import { send } from 'process';
+import { InjectConnection } from '@nestjs/mongoose';
 
 @Controller('products')
 export class ProductsController {
@@ -24,33 +23,28 @@ export class ProductsController {
   @Post()
   async createProduct(
     @Res() response,
-    @Body() CreateProductDto: CreateProductDto,
+    @Body() createProductDto: CreateProductDto,
   ) {
     try {
       const newProduct = await this.productService.productCreate(
-        CreateProductDto,
+        createProductDto,
       );
 
       return response.status(HttpStatus.CREATED).json({
         message: 'Product created successfully',
         newProduct,
       });
-    } catch (err) {
-      return response.status(HttpStatus.BAD_REQUEST).json({
-        statusCode: 400,
-        message: 'Error: Product not created',
-        error: 'Bad Request',
-      });
+    } catch (error) {
+      throw new BadRequestException(error.message);
     }
   }
 
   @Get()
-  async getProducts(@Res() response) {
+  async getProducts(@Res() response, productName: string) {
     try {
-      const productData = await this.productService.getAllProducts();
+      const productData = await this.productService.getAllProducts(productName);
       console.log(productData);
       return response.status(HttpStatus.OK).json({
-        message: 'success',
         productData,
       });
     } catch (err) {
