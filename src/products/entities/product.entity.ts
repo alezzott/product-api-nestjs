@@ -1,16 +1,19 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, now } from 'mongoose';
+import { Transform } from 'class-transformer';
+import { Document, ObjectId } from 'mongoose';
 
 export type ProductDocument = Product & Document;
 
 @Schema()
-export class Product {
+export class Product extends Document {
+  // @Transform(({ value }) => value.toString())
+  // _id: ObjectId;
+
   @Prop({
     required: true,
     unique: true,
-    message: 'Name must be unique',
   })
-  name: string;
+  productName: string;
 
   @Prop()
   description: string;
@@ -24,7 +27,7 @@ export class Product {
   @Prop()
   isStock?: boolean;
 
-  @Prop({ default: Date.now })
+  @Prop({ type: Date, default: Date.now })
   createdAt: Date;
 }
 
